@@ -1,6 +1,6 @@
 # Okera performance benchmarking for Apache Hive bucketing datasets
 
-This test is based on standard [TPC-DS](http://www.tpc.org/tpcds/) dataset and includes the following tables from it.
+This test is based on standard [TPC-DS](http://www.tpc.org/tpcds/) dataset and includes the following tables.
 * catalog_sales
 * store_sales
 * store_returns
@@ -8,7 +8,7 @@ This test is based on standard [TPC-DS](http://www.tpc.org/tpcds/) dataset and i
 * date_dim
 * store
 
-There are several ways to generate data for TPC-DS and that is not covered in this blog.
+There are several ways to generate data for TPC-DS, which are not covered in this blog.
 
 ## Test infrastructure
 
@@ -27,22 +27,22 @@ Files are stored in parquet format
 | store_sales      | 2879987999 | 220 GB |
 | store_returns      | 287999764 | 25 GB |
 
-Other helpers tables like date_dim, store and item are smaller tables.
+Other helpers tables like date_dim, store, and item are smaller tables.
 
 ## Test setup
-* Test tables create statements can be found under `test-tables` folder. For simplicity, the same underlying data is used for non-bucketed vs bucketed comparison. For bucketed tables we would specify the `CLUSTERED BY` clause that would indicate a bucketed table. For non-bucketed tables we would not specify that clause. This results in different query execution plan and we will use it for bucketed vs non-bucketed query performance.
-* The test tables for bucketed tables are bucketed (clustered) by the `xx_customer_sk` which is common in the three tables used for comparison. Note, in-order for the join to be evaluated as a `bucketed hash join`, the bucketing column type has to match between the tables involved in the join. It is not necessary for the column names to match.
-* For non-bucketed tables, we do not specify the `CLUSTERED BY` clause and hence making it look like a regular table without any bucketed info (although, it still refers to the same bucketed dataset stored in the test storage)
+* Test tables' create statements can be found in the `test-tables` folder. For simplicity's sake, the same underlying data is used for non-bucketed vs bucketed comparison. For bucketed tables we would specify the `CLUSTERED BY` clause that indicates a bucketed table. For non-bucketed tables we would not specify that clause. This results in different query execution plans, and we will use it for bucketed vs non-bucketed query performance.
+* The test tables for bucketed tables are bucketed (clustered) by the `xx_customer_sk` which is common in the three tables used for comparison. Note: in order for the join to be evaluated as a `bucketed hash join`, the bucketing column type has to match between the tables involved in the join. The column names do not need to match.
+* For non-bucketed tables, we do not specify the `CLUSTERED BY` clause, thus making it look like a regular table without any bucketed info (although it still refers to the same bucketed dataset stored in the test storage).
 
 
 ## Test run details.
 * First we create the test tables and views in Okera by running the DDL statements in the `test-tables` folder.
-* Here we seed bucketed and non-bucketed tables. In addition, we also seed views that represent the join queries. This is necessary in order to evaluate the entire join query in Okera instead of the client (databricks in this case). More about Okera views [here](https://docs.okera.com/odas/latest/integrate/hive-best-practices/#external-views)
-* The queries specified in the `queries` folder are then run from databricks cluster that is connected to Okera. More about Databricks<->Okera [integration](https://docs.okera.com/odas/latest/integrate/databricks-integration/)
-* When a query is executed from Databricks notebook cell, the query is first sent to Okera planner for auditing purposes (access control) and Okera planner returns a detailed plan for the query. Each plan node is then treated as individual table scan on Databricks side and the scan tasks are sent to Okera workers, which in turn scan the records from the underlying storage and send back the results to the client where other join, aggregation operations take place. In order to ensure the `bucketed hash join` happens in Okera, we had created the views in Okera, in which case the view is executed in Okera and the client, Databricks, treats it as any other table.
+* Here we seed bucketed and non-bucketed tables. In addition, we also seed views that represent the join queries. This is necessary in order to evaluate the entire join query in Okera instead of the client (Databricks in this case). More about Okera views [here](https://docs.okera.com/odas/latest/integrate/hive-best-practices/#external-views)
+* The queries specified in the `queries` folder are then run from a databricks cluster that is connected to Okera. More about Databricks<->Okera integration [here](https://docs.okera.com/odas/latest/integrate/databricks-integration/)
+* When a query is executed from a Databricks notebook cell, the query is first sent to the Okera planner for auditing purposes (access control), which will return a detailed plan for the query. Each plan node is then treated as individual table scan on Databricks' side. The scan tasks are sent to Okera workers, which in turn scan the records from the underlying storage and send the results back to the client where other join aggregation operations take place. In order to ensure the `bucketed hash join` happens in Okera, we created the views in Okera, in which case the view is executed in Okera and the client, Databricks, treats it as any other table.
 
 ## Test Queries
-* Benchmark queries can be found under `queries` folder. Note, the below one is for bucketed tables, similar queries were run for non-bucketed case that just replace the bucketed with non-bucketed tables/views.
+* Benchmark queries can be found under `queries` folder. Note: the below one is for bucketed tables; similar queries were run for the non-bucketed case that just replaced the bucketed with non-bucketed tables/views.
 ```
 -- Query 1: Join between catalog_sales and store_returns. Simulates big-medium tables
 SELECT
