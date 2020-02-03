@@ -1,6 +1,6 @@
 # Okera performance benchmarking for Apache Hive bucketing datasets
 
-This test is based on standard [TPC-DS](http://www.tpc.org/tpcds/) dataset and includes the following tables.
+This test is based on a standard [TPC-DS](http://www.tpc.org/tpcds/) dataset and includes the following tables.
 * catalog_sales
 * store_sales
 * store_returns
@@ -30,7 +30,7 @@ Files are stored in parquet format
 Other helpers tables like date_dim, store, and item are smaller tables.
 
 ## Test setup
-* Test tables' create statements can be found in the `test-tables` folder. For simplicity's sake, the same underlying data is used for non-bucketed vs bucketed comparison. For bucketed tables we would specify the `CLUSTERED BY` clause that indicates a bucketed table. For non-bucketed tables we would not specify that clause. This results in different query execution plans, and we will use it for bucketed vs non-bucketed query performance.
+* Test tables' create statements can be found in the `test-tables` folder. For simplicity's sake, the same underlying data is used for both non-bucketed and bucketed queries. For bucketed tables we would specify the `CLUSTERED BY` clause that indicates a bucketed table. For non-bucketed tables we would not specify that clause. This results in different query execution plans, and we will use it for bucketed vs non-bucketed query performance.
 * The test tables for bucketed tables are bucketed (clustered) by the `xx_customer_sk` which is common in the three tables used for comparison. Note: in order for the join to be evaluated as a `bucketed hash join`, the bucketing column type has to match between the tables involved in the join. The column names do not need to match.
 * For non-bucketed tables, we do not specify the `CLUSTERED BY` clause, thus making it look like a regular table without any bucketed info (although it still refers to the same bucketed dataset stored in the test storage).
 
